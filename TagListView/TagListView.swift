@@ -13,6 +13,44 @@ import UIKit
     @objc optional func tagRemoveButtonPressed(_ title: String, tagView: TagView, sender: TagListView) -> Void
 }
 
+@objc public protocol TagListViewDataSource {
+    @objc optional func tagListView(_ tabListView: TagListView, forTitle title: String) -> TagView
+    @objc optional func tagListView(_ tabListView: TagListView, iconforTitle title: String) -> UIImage?
+}
+
+extension TagListViewDataSource {
+    public func tagListView(_ tabListView: TagListView, forTitle title: String) -> TagView {
+        let tagView = TagView(title: title)
+        
+        tagView.textColor = tabListView.textColor
+        tagView.selectedTextColor = tabListView.selectedTextColor
+        tagView.tagBackgroundColor = tabListView.tagBackgroundColor
+        tagView.highlightedBackgroundColor = tabListView.tagHighlightedBackgroundColor
+        tagView.selectedBackgroundColor = tabListView.tagSelectedBackgroundColor
+        tagView.titleLineBreakMode = tabListView.tagLineBreakMode
+        tagView.cornerRadius = tabListView.cornerRadius
+        tagView.borderWidth = tabListView.borderWidth
+        tagView.borderColor = tabListView.borderColor
+        tagView.selectedBorderColor = tabListView.selectedBorderColor
+        tagView.paddingX = tabListView.paddingX
+        tagView.paddingY = tabListView.paddingY
+        tagView.textFont = tabListView.textFont
+        tagView.removeIconLineWidth = tabListView.removeIconLineWidth
+        tagView.removeButtonIconSize = tabListView.removeButtonIconSize
+        tagView.enableRemoveButton = tabListView.enableRemoveButton
+        tagView.removeIconLineColor = tabListView.removeIconLineColor
+        return tagView
+    }
+    
+    public func tagListView(_ tabListView: TagListView, iconforTitle title: String) -> UIImage? {
+        nil
+    }
+}
+
+extension TagListView: TagListViewDataSource {
+    
+}
+
 @IBDesignable
 open class TagListView: UIView {
     
@@ -196,6 +234,15 @@ open class TagListView: UIView {
         }
     }
     
+//    @IBInspectable open dynamic var removeIcon: UIImage? = nil {
+//        didSet {
+//            defer { rearrangeViews() }
+//            tagViews.forEach {
+//                $0.removeIconLineColor = removeIconLineColor
+//            }
+//        }
+//    }
+    
     @objc open dynamic var textFont: UIFont = .systemFont(ofSize: 12) {
         didSet {
             defer { rearrangeViews() }
@@ -206,6 +253,7 @@ open class TagListView: UIView {
     }
     
     @IBOutlet open weak var delegate: TagListViewDelegate?
+    @IBOutlet open weak var dataSource: TagListViewDataSource?
     
     open private(set) var tagViews: [TagView] = []
     private(set) var tagBackgroundViews: [UIView] = []
@@ -335,25 +383,33 @@ open class TagListView: UIView {
     }
     
     private func createNewTagView(_ title: String) -> TagView {
-        let tagView = TagView(title: title)
-        
-        tagView.textColor = textColor
-        tagView.selectedTextColor = selectedTextColor
-        tagView.tagBackgroundColor = tagBackgroundColor
-        tagView.highlightedBackgroundColor = tagHighlightedBackgroundColor
-        tagView.selectedBackgroundColor = tagSelectedBackgroundColor
-        tagView.titleLineBreakMode = tagLineBreakMode
-        tagView.cornerRadius = cornerRadius
-        tagView.borderWidth = borderWidth
-        tagView.borderColor = borderColor
-        tagView.selectedBorderColor = selectedBorderColor
-        tagView.paddingX = paddingX
-        tagView.paddingY = paddingY
-        tagView.textFont = textFont
-        tagView.removeIconLineWidth = removeIconLineWidth
-        tagView.removeButtonIconSize = removeButtonIconSize
-        tagView.enableRemoveButton = enableRemoveButton
-        tagView.removeIconLineColor = removeIconLineColor
+        let tagView: TagView
+        if let tView = (dataSource ?? self).tagListView?(self, forTitle: title)  {
+            tagView = tView
+        } else {
+            tagView = TagView(title: title)
+            
+            tagView.textColor = textColor
+            tagView.selectedTextColor = selectedTextColor
+            tagView.tagBackgroundColor = tagBackgroundColor
+            tagView.highlightedBackgroundColor = tagHighlightedBackgroundColor
+            tagView.selectedBackgroundColor = tagSelectedBackgroundColor
+            tagView.titleLineBreakMode = tagLineBreakMode
+            tagView.cornerRadius = cornerRadius
+            tagView.borderWidth = borderWidth
+            tagView.borderColor = borderColor
+            tagView.selectedBorderColor = selectedBorderColor
+            tagView.paddingX = paddingX
+            tagView.paddingY = paddingY
+            tagView.textFont = textFont
+            tagView.removeIconLineWidth = removeIconLineWidth
+            tagView.removeButtonIconSize = removeButtonIconSize
+            tagView.enableRemoveButton = enableRemoveButton
+            tagView.removeIconLineColor = removeIconLineColor
+           
+        }
+        tagView.removeIcon = (dataSource ?? self).tagListView?(self, iconforTitle: title)
+        tagView.enableRemoveButton = tagView.removeIcon != nil
         tagView.addTarget(self, action: #selector(tagPressed(_:)), for: .touchUpInside)
         tagView.removeButton.addTarget(self, action: #selector(removeButtonPressed(_:)), for: .touchUpInside)
         
@@ -363,7 +419,6 @@ open class TagListView: UIView {
                 $0.isSelected = $0 == this
             }
         }
-        
         return tagView
     }
 

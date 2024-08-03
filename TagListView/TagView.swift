@@ -148,6 +148,12 @@ open class TagView: UIButton {
         }
     }
     
+    @IBInspectable open var removeIcon: UIImage? = nil {
+        didSet {
+            removeButton.setImage(removeIcon, for: .normal)
+        }
+    }
+    
     /// Handles Tap (TouchUpInside)
     open var onTap: ((TagView) -> Void)?
     open var onLongPress: ((TagView) -> Void)?
@@ -209,10 +215,10 @@ open class TagView: UIButton {
     open override func layoutSubviews() {
         super.layoutSubviews()
         if enableRemoveButton {
-            removeButton.frame.size.width = paddingX + removeButtonIconSize + paddingX
-            removeButton.frame.origin.x = self.frame.width - removeButton.frame.width
-            removeButton.frame.size.height = self.frame.height
-            removeButton.frame.origin.y = 0
+            removeButton.frame.size.width = removeButtonIconSize// paddingX + removeButtonIconSize + paddingX
+            removeButton.frame.origin.x = self.frame.width - (removeButton.frame.width + paddingX)
+            removeButton.frame.size.height = removeButtonIconSize// paddingX + removeButtonIconSize + paddingX
+            removeButton.frame.origin.y = ( self.frame.height / 2 ) - (removeButton.frame.size.height / 2 )
         }
     }
 }
